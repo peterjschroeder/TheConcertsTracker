@@ -42,9 +42,9 @@ __author__ = ''' Fabio Lamanna (fabio@fabiolamanna.it) '''
 
 # Import Modules
 try:
-	import ujson as json
+    import ujson as json
 except:
-	import json
+    import json
 
 import requests
 import csv
@@ -55,173 +55,177 @@ import math
 
 def main():
 
-	# Set Workbooks for .csv
-	f = open(sys.argv[2] + 'SetlistsTracker.csv', 'wt', encoding='utf-8')
+    # Set Workbooks for .csv
+    f = open(sys.argv[2] + 'SetlistsTracker.tsv', 'wt', encoding='utf-8')
 
-	# Write .csv Headers
-	writer = csv.writer(f, delimiter=';')
+    # Write .csv Headers
+    writer = csv.writer(f, delimiter='\t')
 
-	writer.writerow( 
-	                (
-	                'eventID',
-	                'song',
-	                'set'
-	                )
-	                )
+    writer.writerow( 
+                    (
+                    'eventID',
+                    'song',
+                    'set'
+                    )
+                    )
 
-	# Call Setlist.fm API
-	url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=1'
-	headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
-	r = requests.get(url, headers=headers)
-	
-	# Get .json Data
-	data = r.json()
+    # Call Setlist.fm API
+    url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=1'
+    headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
+    r = requests.get(url, headers=headers)
+    
+    # Get .json Data
+    data = r.json()
 
-	# Get total number of shows and handle missing shows
-	try:
-		
-		totalshows = int(data['total'])
+    # Get total number of shows and handle missing shows
+    try:
+        
+        totalshows = int(data['total'])
 
-	except:
-		print('Sorry, the artist you are looking for has no concerts in the database')
-		sys.exit(1)
+    except:
+        print('Sorry, the artist you are looking for has no concerts in the database')
+        sys.exit(1)
 
-	# Total Number of Pages needed to load
-	pages = int(math.ceil(totalshows/20))
+    # Total Number of Pages needed to load
+    pages = int(math.ceil(totalshows/20))
 
-	for page in range(1,pages):
+    for page in range(1,pages):
 
-		url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=' + str(page)
-		headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
-		r = requests.get(url, headers=headers)
-	
-		# Get .json Data
-		data = r.json()
+        url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=' + str(page)
+        headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
+        r = requests.get(url, headers=headers)
+    
+        # Get .json Data
+        data = r.json()
 
-		for line in data:
+        for line in data:
 
-			# Loop through each setlist
-			for i in range(len(data['setlist'])):
+            # FIXME: Some lines are missing setlist
+            try:
+                # Loop through each setlist
+                for i in range(len(data['setlist'])):
 
-				# No Data Available
-				if data['setlist'][i]['sets'] == '':
+                    # No Data Available
+                    if data['setlist'][i]['sets'] == '':
 
-					writer.writerow(
-					                (
-					                # Event ID
-					                data['setlist'][i]['id'],
-					                # Songs
-					                'None',
-					                # Set
-					                'None'
-					                )
-					                )
+                        writer.writerow(
+                                        (
+                                        # Event ID
+                                        data['setlist'][i]['id'],
+                                        # Songs
+                                        'None',
+                                        # Set
+                                        'None'
+                                        )
+                                        )
 
-				else:
+                    else:
 
-					for j in data['setlist'][i]['sets']:
+                        for j in data['setlist'][i]['sets']:
 
-						# Check for number of sets (Main, Encore(s))
-						numberofsets = len(data['setlist'][i]['sets']['set'])
+                            # Check for number of sets (Main, Encore(s))
+                            numberofsets = len(data['setlist'][i]['sets']['set'])
 
-						if numberofsets == 1:
+                            if numberofsets == 1:
 
-							try:
+                                try:
 
-								for k in data['setlist'][i]['sets']['set']['song']:
+                                    for k in data['setlist'][i]['sets']['set']['song']:
 
-									try:
+                                        try:
 
-										writer.writerow(
-										                (
-										                # Event ID
-										                data['setlist'][i]['id'],
-										                # Songs
-										                k['name'],
-										                # Set
-										                '0'
-										                )
-										                )
+                                            writer.writerow(
+                                                            (
+                                                            # Event ID
+                                                            data['setlist'][i]['id'],
+                                                            # Songs
+                                                            k['name'],
+                                                            # Set
+                                                            '0'
+                                                            )
+                                                            )
 
-									except:
+                                        except:
 
-										writer.writerow(
-										                (
-										                # Event ID
-										                data['setlist'][i]['id'],
-										                # Songs
-										                data['setlist'][i]['sets']['set']['song']['name'],
-										                # Set
-										                '0'
-										                )
-										                )
+                                            writer.writerow(
+                                                            (
+                                                            # Event ID
+                                                            data['setlist'][i]['id'],
+                                                            # Songs
+                                                            data['setlist'][i]['sets']['set']['song']['name'],
+                                                            # Set
+                                                            '0'
+                                                            )
+                                                            )
 
-							except:
+                                except:
 
-								writer.writerow(
-								                (
-								                # Event ID
-								                data['setlist'][i]['id'],
-								                # Songs
-								                'None',
-								                # Set
-								                'None'
-								                )
-								                )
+                                    writer.writerow(
+                                                    (
+                                                    # Event ID
+                                                    data['setlist'][i]['id'],
+                                                    # Songs
+                                                    'None',
+                                                    # Set
+                                                    'None'
+                                                    )
+                                                    )
 
-						# Case numberofsets > 1
-						elif numberofsets > 1:
+                            # Case numberofsets > 1
+                            elif numberofsets > 1:
 
-							for s in range(numberofsets):
+                                for s in range(numberofsets):
 
-								try:
+                                    try:
 
-									for k in data['setlist'][i]['sets']['set'][s]['song']:
+                                        for k in data['setlist'][i]['sets']['set'][s]['song']:
 
-										try:
+                                            try:
 
-											writer.writerow(
-											                (
-											                # Event ID
-											                data['setlist'][i]['id'],
-											                # Songs
-											                k['name'],
-											                # Set
-											                s
-											                )
-											                )
+                                                writer.writerow(
+                                                                (
+                                                                # Event ID
+                                                                data['setlist'][i]['id'],
+                                                                # Songs
+                                                                k['name'],
+                                                                # Set
+                                                                s
+                                                                )
+                                                                )
 
-										except:
+                                            except:
 
-											writer.writerow(
-											                (
-											                # Event ID
-											                data['setlist'][i]['id'],
-											                # Songs
-											                data['setlist'][i]['sets']['set'][s]['song']['name'],
-											                # Set
-											                s
-											                )
-											                )
+                                                writer.writerow(
+                                                                (
+                                                                # Event ID
+                                                                data['setlist'][i]['id'],
+                                                                # Songs
+                                                                data['setlist'][i]['sets']['set'][s]['song']['name'],
+                                                                # Set
+                                                                s
+                                                                )
+                                                                )
 
-								except:
+                                    except:
 
-									writer.writerow(
-									                (
-									                # Event ID
-									                data['setlist'][i]['id'],
-									                # Songs
-									                'None',
-									                # Set
-									                'None'
-									                )
-									                )
+                                        writer.writerow(
+                                                        (
+                                                        # Event ID
+                                                        data['setlist'][i]['id'],
+                                                        # Songs
+                                                        'None',
+                                                        # Set
+                                                        'None'
+                                                        )
+                                                        )
+            except:
+                pass
 
-	f.close()
+    f.close()
 
 if __name__ == '__main__':
 
-	main()
+    main()
 
 
 

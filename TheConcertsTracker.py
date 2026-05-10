@@ -43,9 +43,9 @@ __author__ = """ Fabio Lamanna (fabio@fabiolamanna.it) """
 
 # Import Modules
 try:
-	import ujson as json
+    import ujson as json
 except:
-	import json
+    import json
 
 import requests
 import csv
@@ -56,109 +56,113 @@ import math
 
 def main():
 
-	# Set Workbooks for .csv
-	f = open(sys.argv[2] + 'ConcertsTracker.csv', 'wt', encoding='utf-8')
+    # Set Workbooks for .csv
+    f = open(sys.argv[2] + 'ConcertsTracker.tsv', 'wt', encoding='utf-8')
 
-	# Inizialize .csv file
-	writer = csv.writer(f, delimiter=';')
+    # Inizialize .csv file
+    writer = csv.writer(f, delimiter='\t')
 
-	# Write .csv headers
-	writer.writerow( 
-	                (
-	                'eventID',
-	                'artist',
-	                'eventdate',
-	                'tourname',
-	                'venue',
-	                'venue_id',
-	                'city',
-	                'city_id',
-	                'city_lat',
-	                'city_lon',
-	                'state',
-	                'state_id',
-	                'country',
-	                'country_id'
-	                )
-	                )
+    # Write .csv headers
+    writer.writerow( 
+                    (
+                    'eventID',
+                    'artist',
+                    'eventdate',
+                    'tourname',
+                    'venue',
+                    'venue_id',
+                    'city',
+                    'city_id',
+                    'city_lat',
+                    'city_lon',
+                    'state',
+                    'state_id',
+                    'country',
+                    'country_id'
+                    )
+                    )
 
-	# Call Setlist.fm API
-	url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=1'
-	headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
-	r = requests.get(url, headers=headers)
-	
-	# Get .json Data
-	data = r.json()
+    # Call Setlist.fm API
+    url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=1'
+    headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
+    r = requests.get(url, headers=headers)
+    
+    # Get .json Data
+    data = r.json()
 
-	# Get total number of shows and handle missing shows
-	try:
-		
-		totalshows = int(data['total'])
+    # Get total number of shows and handle missing shows
+    try:
+        
+        totalshows = int(data['total'])
 
-	except:
-		print('Sorry, the artist you are looking for has no concerts in the database')
-		sys.exit(1)
+    except:
+        print('Sorry, the artist you are looking for has no concerts in the database')
+        sys.exit(1)
 
-	# Total Number of Pages needed to load
-	pages = int(math.ceil(totalshows/20))
+    # Total Number of Pages needed to load
+    pages = int(math.ceil(totalshows/20))
 
-	for page in range(1,pages):
+    for page in range(1,pages):
 
-		url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=' + str(page)
-		headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
-		r = requests.get(url, headers=headers)
-	
-		# Get .json Data
-		data = r.json()
+        url = 'https://api.setlist.fm/rest/1.0/artist/' + sys.argv[1] + '/setlists?p=' + str(page)
+        headers = {'Accept': 'application/json', 'x-api-key': sys.argv[3]}
+        r = requests.get(url, headers=headers)
+    
+        # Get .json Data
+        data = r.json()
 
-		# Read .json file line per line
-		for line in data:
+        # Read .json file line per line
+        for line in data:
+            
+            # FIXME: Some lines are missing setlist
+            try:
+                for i in range(len(data['setlist'])):
 
-			for i in range(len(data['setlist'])):
+                    # Check existence of Tour Name (other fields are mandatory or automatically created)
+                    try:
+                        c = data['setlist'][i]['tour']['name']
+                    except KeyError:
+                        c = 'None'
 
-				# Check existence of Tour Name (other fields are mandatory or automatically created)
-				try:
-					c = data['setlist'][i]['tour']['name']
-				except KeyError:
-					c = 'None'
+                    writer.writerow(
+                                    (
+                                    # Event ID
+                                    data['setlist'][i]['id'],
+                                    # Artist
+                                    data['setlist'][i]['artist']['name'],
+                                    # Eventdate
+                                    data['setlist'][i]['eventDate'],
+                                    # TourName
+                                    c,
+                                    # Venue
+                                    data['setlist'][i]['venue'].get('name'),
+                                    # Venue ID
+                                    data['setlist'][i]['venue'].get('id'),
+                                    # City
+                                    data['setlist'][i]['venue']['city'].get('name'),
+                                    # City ID
+                                    data['setlist'][i]['venue']['city'].get('id'),
+                                    # City Latitude
+                                    float(data['setlist'][i]['venue']['city']['coords'].get('lat')),
+                                    # City Longitude
+                                    float(data['setlist'][i]['venue']['city']['coords'].get('long')),
+                                    # State
+                                    data['setlist'][i]['venue']['city'].get('state'),
+                                    # State Code
+                                    data['setlist'][i]['venue']['city'].get('stateCode'),
+                                    # Country
+                                    data['setlist'][i]['venue']['city']['country'].get('name'),
+                                    # Country Code
+                                    data['setlist'][i]['venue']['city']['country'].get('code')
+                                    )
+                                    )
+            except:
+                pass
 
-				writer.writerow(
-				                (
-				                # Event ID
-				                data['setlist'][i]['id'],
-				                # Artist
-				                data['setlist'][i]['artist']['name'],
-				                # Eventdate
-				                data['setlist'][i]['eventDate'],
-				                # TourName
-				                c,
-				                # Venue
-				                data['setlist'][i]['venue'].get('name'),
-				                # Venue ID
-				                data['setlist'][i]['venue'].get('id'),
-				                # City
-				                data['setlist'][i]['venue']['city'].get('name'),
-				                # City ID
-				                data['setlist'][i]['venue']['city'].get('id'),
-				                # City Latitude
-				                float(data['setlist'][i]['venue']['city']['coords'].get('lat')),
-				                # City Longitude
-				                float(data['setlist'][i]['venue']['city']['coords'].get('long')),
-				                # State
-				                data['setlist'][i]['venue']['city'].get('state'),
-				                # State Code
-				                data['setlist'][i]['venue']['city'].get('stateCode'),
-				                # Country
-				                data['setlist'][i]['venue']['city']['country'].get('name'),
-				                # Country Code
-				                data['setlist'][i]['venue']['city']['country'].get('code')
-				                )
-				                )
-
-	f.close()
+    f.close()
 
 if __name__ == '__main__':
 
-	main()
+    main()
 
 
