@@ -111,53 +111,53 @@ def main():
         # Get .json Data
         data = r.json()
 
+        # Check to see if there is a setlist
+        if not data.get('setlist'):
+            continue
+
         # Read .json file line per line
         for line in data:
             
-            # FIXME: Some lines are missing setlist
-            try:
-                for i in range(len(data['setlist'])):
+            for i in range(len(data['setlist'])):
 
-                    # Check existence of Tour Name (other fields are mandatory or automatically created)
-                    try:
-                        c = data['setlist'][i]['tour']['name']
-                    except KeyError:
-                        c = 'None'
+                # Check existence of Tour Name (other fields are mandatory or automatically created)
+                try:
+                    c = data['setlist'][i]['tour']['name']
+                except KeyError:
+                    c = 'None'
 
-                    writer.writerow(
-                                    (
-                                    # Event ID
-                                    data['setlist'][i]['id'],
-                                    # Artist
-                                    data['setlist'][i]['artist']['name'],
-                                    # Eventdate
-                                    data['setlist'][i]['eventDate'],
-                                    # TourName
-                                    c,
-                                    # Venue
-                                    data['setlist'][i]['venue'].get('name'),
-                                    # Venue ID
-                                    data['setlist'][i]['venue'].get('id'),
-                                    # City
-                                    data['setlist'][i]['venue']['city'].get('name'),
-                                    # City ID
-                                    data['setlist'][i]['venue']['city'].get('id'),
-                                    # City Latitude
-                                    float(data['setlist'][i]['venue']['city']['coords'].get('lat')),
-                                    # City Longitude
-                                    float(data['setlist'][i]['venue']['city']['coords'].get('long')),
-                                    # State
-                                    data['setlist'][i]['venue']['city'].get('state'),
-                                    # State Code
-                                    data['setlist'][i]['venue']['city'].get('stateCode'),
-                                    # Country
-                                    data['setlist'][i]['venue']['city']['country'].get('name'),
-                                    # Country Code
-                                    data['setlist'][i]['venue']['city']['country'].get('code')
-                                    )
-                                    )
-            except:
-                pass
+                writer.writerow(
+                                (
+                                # Event ID
+                                data['setlist'][i]['id'],
+                                # Artist
+                                data['setlist'][i]['artist']['name'],
+                                # Eventdate
+                                data['setlist'][i]['eventDate'],
+                                # TourName
+                                c,
+                                # Venue
+                                data['setlist'][i]['venue'].get('name'),
+                                # Venue ID
+                                data['setlist'][i]['venue'].get('id'),
+                                # City
+                                data['setlist'][i]['venue']['city'].get('name'),
+                                # City ID
+                                data['setlist'][i]['venue']['city'].get('id'),
+                                # City Latitude
+                                float(data['setlist'][i]['venue']['city']['coords'].get('lat')),
+                                # City Longitude
+                                float(data['setlist'][i]['venue']['city']['coords'].get('long')),
+                                # State
+                                data['setlist'][i]['venue']['city'].get('state'),
+                                # State Code
+                                data['setlist'][i]['venue']['city'].get('stateCode'),
+                                # Country
+                                data['setlist'][i]['venue']['city']['country'].get('name'),
+                                # Country Code
+                                data['setlist'][i]['venue']['city']['country'].get('code')
+                                )
+                                )
 
     f.close()
 
